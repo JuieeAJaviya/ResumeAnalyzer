@@ -1,0 +1,10 @@
+# Secret config - contains API keys, never commit this
+config.js
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+.idea/
