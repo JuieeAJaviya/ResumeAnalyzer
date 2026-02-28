@@ -1,243 +1,614 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Resume Analyzer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .container { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
-    h1 { text-align: center; color: #2d3748; margin-bottom: 6px; font-size: 28px; }
-    .subtitle { text-align: center; color: #718096; margin-bottom: 32px; font-size: 14px; }
-    label { display: block; font-weight: 600; color: #4a5568; margin-bottom: 6px; font-size: 14px; }
-    textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; margin-bottom: 20px; resize: vertical; min-height: 120px; outline: none; transition: border 0.2s; }
-    textarea:focus { border-color: #667eea; }
-    .upload-area { border: 2px dashed #cbd5e0; border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: all 0.2s; background: #f7fafc; }
-    .upload-area:hover { border-color: #667eea; background: #ebf4ff; }
-    .upload-area.has-file { border-color: #48bb78; background: #f0fff4; }
-    .upload-area .icon { font-size: 36px; margin-bottom: 8px; }
-    .upload-area p { color: #718096; font-size: 14px; }
-    .upload-area .file-name { color: #48bb78; font-weight: 600; margin-top: 6px; }
-    input[type="file"] { display: none; }
-    button { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
-    button:hover { opacity: 0.9; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .progress { margin-top: 16px; display: none; }
-    .progress-bar-bg { background: #e2e8f0; border-radius: 8px; height: 8px; overflow: hidden; }
-    .progress-bar { height: 100%; background: linear-gradient(135deg, #667eea, #764ba2); width: 0%; transition: width 0.3s; border-radius: 8px; }
-    .progress-text { text-align: center; font-size: 13px; color: #667eea; margin-top: 6px; font-weight: 500; }
-    #result { margin-top: 28px; display: none; }
-    .score-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 16px; }
-    .score-number { font-size: 60px; font-weight: 700; }
-    .score-label { font-size: 14px; opacity: 0.85; margin-top: 4px; }
-    .score-note { font-size: 13px; opacity: 0.75; margin-top: 6px; }
-    .keywords-box { background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; }
-    .keywords-box h3 { color: #4a5568; margin-bottom: 12px; font-size: 14px; font-weight: 600; }
-    .keywords { display: flex; flex-wrap: wrap; gap: 8px; }
-    .keyword-tag { background: #ebf4ff; color: #3182ce; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
-    .resume-id { margin-top: 12px; font-size: 12px; color: #a0aec0; text-align: center; }
-    .error { background: #fff5f5; border: 2px solid #fc8181; color: #c53030; padding: 12px; border-radius: 8px; margin-top: 16px; font-size: 14px; display: none; }
-    .debug { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 12px; font-family: monospace; display: none; word-break: break-all; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 640px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2d3748;
+      margin-bottom: 6px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #718096;
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    input[type="email"],
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    input[type="email"]:focus,
+    textarea:focus {
+      border-color: #667eea;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .upload-area {
+      border: 2px dashed #cbd5e0;
+      border-radius: 8px;
+      padding: 30px;
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f7fafc;
+    }
+
+    .upload-area:hover {
+      border-color: #667eea;
+      background: #ebf4ff;
+    }
+
+    .upload-area.has-file {
+      border-color: #48bb78;
+      background: #f0fff4;
+    }
+
+    .upload-area .icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .upload-area p {
+      color: #718096;
+      font-size: 14px;
+    }
+
+    .upload-area .file-name {
+      color: #48bb78;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .progress {
+      margin-top: 16px;
+      display: none;
+    }
+
+    .progress-bar-bg {
+      background: #e2e8f0;
+      border-radius: 8px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      width: 0%;
+      transition: width 0.3s;
+      border-radius: 8px;
+    }
+
+    .progress-text {
+      text-align: center;
+      font-size: 13px;
+      color: #667eea;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    #result {
+      margin-top: 28px;
+      display: none;
+    }
+
+    /* Gauge */
+    .gauge-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .gauge-svg {
+      width: 220px;
+      height: 220px;
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: #e2e8f0;
+      stroke-width: 18;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke-width: 18;
+      stroke-linecap: round;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+      transition: stroke-dashoffset 1.5s ease, stroke 1s ease;
+    }
+
+    .gauge-text-score {
+      font-size: 36px;
+      font-weight: 700;
+      fill: #2d3748;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .gauge-text-label {
+      font-size: 13px;
+      fill: #718096;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .gauge-note {
+      font-size: 18px;
+      margin-top: 8px;
+      font-weight: 600;
+      color: #4a5568;
+    }
+
+    /* Keywords */
+    .keywords-box {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .keywords-box h3 {
+      color: #4a5568;
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .keyword-tag {
+      background: #ebf4ff;
+      color: #3182ce;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .missing-box {
+      background: #fff5f5;
+      border: 2px solid #fed7d7;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .missing-box h3 {
+      color: #c53030;
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .missing-tag {
+      background: #fff5f5;
+      color: #c53030;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid #fed7d7;
+    }
+
+    /* Chart */
+    .chart-box {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .chart-box h3 {
+      color: #4a5568;
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .resume-id {
+      font-size: 12px;
+      color: #a0aec0;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .error {
+      background: #fff5f5;
+      border: 2px solid #fc8181;
+      color: #c53030;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 16px;
+      font-size: 14px;
+      display: none;
+    }
   </style>
 </head>
+
 <body>
-<div class="container">
-  <h1>📄 Resume Analyzer</h1>
-  <p class="subtitle">Upload your resume and match it against any job description</p>
+  <div class="container">
+    <h1>📄 Resume Analyzer</h1>
+    <p class="subtitle">Upload your resume and match it against any job description</p>
 
-  <label>Upload Resume (PDF)</label>
-  <div class="upload-area" id="uploadArea" onclick="document.getElementById('pdfInput').click()">
-    <div class="icon">📁</div>
-    <p>Click to upload your PDF resume</p>
-    <div class="file-name" id="fileName"></div>
-  </div>
-  <input type="file" id="pdfInput" accept=".pdf" onchange="handleFileSelect(this)" />
+    <!-- Email -->
+    <label>Your Email Address</label>
+    <input type="email" id="emailInput" placeholder="you@example.com" />
 
-  <label>Job Description</label>
-  <textarea id="jobdesc" placeholder="Paste the job description here..."></textarea>
-
-  <button id="analyzeBtn" onclick="analyzeResume()">🔍 Analyze Resume</button>
-
-  <div class="progress" id="progress">
-    <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
-    <div class="progress-text" id="progressText">Uploading...</div>
-  </div>
-
-  <div id="result">
-    <div class="score-card">
-      <div class="score-number" id="scoreValue">0%</div>
-      <div class="score-label">Match Score</div>
-      <div class="score-note" id="scoreNote"></div>
+    <!-- PDF Upload -->
+    <label>Upload Resume (PDF)</label>
+    <div class="upload-area" id="uploadArea" onclick="document.getElementById('pdfInput').click()">
+      <div class="icon">📁</div>
+      <p>Click to upload your PDF resume</p>
+      <div class="file-name" id="fileName"></div>
     </div>
-    <div class="keywords-box">
-      <h3>✅ Matched Keywords</h3>
-      <div class="keywords" id="keywordsList"></div>
+    <input type="file" id="pdfInput" accept=".pdf" onchange="handleFileSelect(this)" />
+
+    <!-- Job Description -->
+    <label>Job Description</label>
+    <textarea id="jobdesc" placeholder="Paste the job description here..."></textarea>
+
+    <button id="analyzeBtn" onclick="analyzeResume()">🔍 Analyze Resume</button>
+
+    <div class="progress" id="progress">
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-text" id="progressText">Uploading...</div>
     </div>
-    <div class="resume-id" id="resumeId"></div>
+
+    <!-- Result -->
+    <div id="result">
+      <div class="gauge-wrapper">
+        <svg class="gauge-svg" viewBox="0 0 200 200">
+          <circle class="gauge-bg" cx="100" cy="100" r="80" />
+          <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="80" stroke="#667eea" stroke-dasharray="502"
+            stroke-dashoffset="502" />
+          <text class="gauge-text-score" id="gaugeScore" x="100" y="92">0%</text>
+          <text class="gauge-text-label" x="100" y="118">Match Score</text>
+        </svg>
+        <div class="gauge-note" id="gaugeNote"></div>
+      </div>
+
+      <div class="keywords-box">
+        <h3>✅ Matched Keywords</h3>
+        <div class="keywords" id="keywordsList"></div>
+      </div>
+
+      <div class="missing-box" id="missingBox">
+        <h3>❌ Missing Keywords — Add these to your resume</h3>
+        <div class="keywords" id="missingList"></div>
+      </div>
+
+      <!-- Score Trend Chart -->
+      <div class="chart-box" id="chartBox">
+        <h3>📊 Your Score Trend</h3>
+        <canvas id="trendChart"></canvas>
+      </div>
+
+      <div class="resume-id" id="resumeId"></div>
+    </div>
+
+    <div class="error" id="errorBox"></div>
   </div>
 
-  <div class="error" id="errorBox"></div>
-  <div class="debug" id="debugBox"></div>
-</div>
+  <script>
+    const API_BASE = 'https://65bn4zv9ii.execute-api.us-east-1.amazonaws.com/prod';
+    let selectedFile = null;
+    let trendChartInstance = null;
 
-<script>
-  const API_BASE = 'https://65bn4zv9ii.execute-api.us-east-1.amazonaws.com/prod';
-  let selectedFile = null;
-
-  function handleFileSelect(input) {
-    const file = input.files[0];
-    if (!file) return;
-    selectedFile = file;
-    document.getElementById('fileName').textContent = '✅ ' + file.name;
-    document.getElementById('uploadArea').classList.add('has-file');
-  }
-
-  function setProgress(percent, text) {
-    document.getElementById('progressBar').style.width = percent + '%';
-    document.getElementById('progressText').textContent = text;
-  }
-
-  function showError(msg) {
-    const box = document.getElementById('errorBox');
-    box.textContent = '❌ ' + msg;
-    box.style.display = 'block';
-  }
-
-  function showDebug(msg) {
-    const box = document.getElementById('debugBox');
-    box.textContent = msg;
-    box.style.display = 'block';
-  }
-
-  function getScoreNote(score) {
-    if (score >= 75) return '🌟 Excellent match!';
-    if (score >= 50) return '👍 Good match';
-    if (score >= 25) return '⚠️ Partial match';
-    return '❌ Low match — consider updating your resume';
-  }
-
-  // Safely extract data from API Gateway response
-  function extractData(raw) {
-    console.log('RAW:', raw);
-    const outer = JSON.parse(raw);
-    console.log('OUTER:', outer);
-    // If body is a string, parse it
-    if (typeof outer.body === 'string') {
-      const inner = JSON.parse(outer.body);
-      console.log('INNER:', inner);
-      return inner;
+    function handleFileSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+      selectedFile = file;
+      document.getElementById('fileName').textContent = '✅ ' + file.name;
+      document.getElementById('uploadArea').classList.add('has-file');
     }
-    // If body is object
-    if (outer.body && typeof outer.body === 'object') {
-      return outer.body;
+
+    function setProgress(percent, text) {
+      document.getElementById('progressBar').style.width = percent + '%';
+      document.getElementById('progressText').textContent = text;
     }
-    // Direct response
-    return outer;
-  }
 
-  async function analyzeResume() {
-    const jobDesc = document.getElementById('jobdesc').value.trim();
-    const btn = document.getElementById('analyzeBtn');
-    const progress = document.getElementById('progress');
-    const result = document.getElementById('result');
+    function showError(msg) {
+      const box = document.getElementById('errorBox');
+      box.textContent = '❌ ' + msg;
+      box.style.display = 'block';
+    }
 
-    document.getElementById('result').style.display = 'none';
-    document.getElementById('errorBox').style.display = 'none';
-    document.getElementById('debugBox').style.display = 'none';
+    function getScoreNote(score) {
+      if (score >= 75) return '🌟 Excellent match!';
+      if (score >= 50) return '👍 Good match';
+      if (score >= 25) return '⚠️ Partial match';
+      return '❌ Low match';
+    }
 
-    if (!selectedFile) { showError('Please upload a PDF resume.'); return; }
-    if (!jobDesc) { showError('Please enter a job description.'); return; }
+    function getGaugeColor(score) {
+      if (score >= 75) return '#48bb78';
+      if (score >= 50) return '#667eea';
+      if (score >= 25) return '#ed8936';
+      return '#fc8181';
+    }
 
-    btn.disabled = true;
-    progress.style.display = 'block';
+    function animateGauge(score) {
+      const circumference = 502;
+      const offset = circumference - (score / 100) * circumference;
+      const fill = document.getElementById('gaugeFill');
+      const scoreText = document.getElementById('gaugeScore');
+      fill.style.stroke = getGaugeColor(score);
+      fill.style.strokeDashoffset = offset;
+      let current = 0;
+      const step = score / 60;
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= score) { current = score; clearInterval(timer); }
+        scoreText.textContent = Math.round(current) + '%';
+      }, 16);
+    }
 
-    try {
-      // ── Step 1: Get pre-signed URL ──
-      setProgress(20, '⏳ Getting upload URL...');
-      const urlRes = await fetch(`${API_BASE}/get-upload-url`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      });
-      const urlRaw = await urlRes.text();
-      console.log('STEP1 RAW:', urlRaw);
+    function extractData(raw) {
+      const outer = JSON.parse(raw);
+      if (typeof outer.body === 'string') return JSON.parse(outer.body);
+      if (outer.body && typeof outer.body === 'object') return outer.body;
+      return outer;
+    }
 
-      const urlData = extractData(urlRaw);
-      console.log('STEP1 DATA:', urlData);
-      console.log('upload_url:', urlData.upload_url);
-      console.log('file_name:', urlData.file_name);
-
-      const upload_url = urlData.upload_url;
-      const file_name = urlData.file_name;
-
-      if (!upload_url || !file_name) {
-        showDebug('STEP1 RAW: ' + urlRaw);
-        throw new Error('Missing upload_url or file_name from /get-upload-url');
-      }
-
-      // ── Step 2: Upload to S3 ──
-      setProgress(50, '📤 Uploading resume to S3...');
-      const uploadRes = await fetch(upload_url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/pdf' },
-        body: selectedFile
-      });
-      console.log('STEP2 S3 upload status:', uploadRes.status);
-      if (!uploadRes.ok) throw new Error('S3 upload failed: ' + uploadRes.status);
-
-      // ── Step 3: Analyze ──
-      setProgress(80, '🔍 Analyzing resume...');
-      const payload = {
-        bucket: 'resume-analyzer-juiee-1',
-        file_name: file_name,
-        job_description: jobDesc
-      };
-      console.log('STEP3 PAYLOAD:', JSON.stringify(payload));
-
-      const analyzeRes = await fetch(`${API_BASE}/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const analyzeRaw = await analyzeRes.text();
-      console.log('STEP3 RAW:', analyzeRaw);
-
-      const data = extractData(analyzeRaw);
-      console.log('STEP3 DATA:', data);
-
-      if (data.message) throw new Error(data.message);
-
-      setProgress(100, '✅ Done!');
-
-      // ── Show Results ──
-      document.getElementById('scoreValue').textContent = data.match_score + '%';
-      document.getElementById('scoreNote').textContent = getScoreNote(data.match_score);
-
-      const kwList = document.getElementById('keywordsList');
-      kwList.innerHTML = '';
-      if (data.matched_keywords && data.matched_keywords.length > 0) {
-        data.matched_keywords.sort().forEach(kw => {
-          const tag = document.createElement('span');
-          tag.className = 'keyword-tag';
-          tag.textContent = kw;
-          kwList.appendChild(tag);
+    async function loadTrendChart(email) {
+      try {
+        const res = await fetch(`${API_BASE}/history`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
         });
-      } else {
-        kwList.innerHTML = '<span style="color:#a0aec0;font-size:13px;">No matching keywords found</span>';
+        const data = extractData(await res.text());
+        const history = data.history || [];
+
+        if (history.length < 2) return; // need at least 2 points
+
+        const labels = history.map((h, i) => {
+          const d = new Date(h.timestamp);
+          return `${d.getDate()}/${d.getMonth() + 1} #${i + 1}`;
+        });
+        const scores = history.map(h => h.match_score);
+
+        const chartBox = document.getElementById('chartBox');
+        chartBox.style.display = 'block';
+
+        if (trendChartInstance) trendChartInstance.destroy();
+
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        trendChartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Match Score (%)',
+              data: scores,
+              borderColor: '#667eea',
+              backgroundColor: 'rgba(102,126,234,0.1)',
+              borderWidth: 3,
+              pointBackgroundColor: scores.map(s => getGaugeColor(s)),
+              pointRadius: 6,
+              pointHoverRadius: 8,
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: ctx => `Score: ${ctx.raw}%`
+                }
+              }
+            },
+            scales: {
+              y: {
+                min: 0, max: 100,
+                ticks: { callback: v => v + '%' },
+                grid: { color: '#e2e8f0' }
+              },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      } catch (e) {
+        console.log('Chart load error:', e);
       }
-
-      document.getElementById('resumeId').textContent = 'Resume ID: ' + data.resume_id;
-      result.style.display = 'block';
-
-    } catch (err) {
-      console.error('ERROR:', err);
-      showError(err.message);
-    } finally {
-      btn.disabled = false;
-      setTimeout(() => { progress.style.display = 'none'; }, 2000);
     }
-  }
-</script>
+
+    async function analyzeResume() {
+      const email = document.getElementById('emailInput').value.trim();
+      const jobDesc = document.getElementById('jobdesc').value.trim();
+      const btn = document.getElementById('analyzeBtn');
+      const progress = document.getElementById('progress');
+
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('errorBox').style.display = 'none';
+
+      if (!email) { showError('Please enter your email address.'); return; }
+      if (!selectedFile) { showError('Please upload a PDF resume.'); return; }
+      if (!jobDesc) { showError('Please enter a job description.'); return; }
+
+      btn.disabled = true;
+      progress.style.display = 'block';
+
+      try {
+        // Step 1: Get pre-signed URL
+        setProgress(20, '⏳ Getting upload URL...');
+        const urlRes = await fetch(`${API_BASE}/get-upload-url`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
+        });
+        const urlData = extractData(await urlRes.text());
+        const { upload_url, file_name } = urlData;
+        if (!upload_url) throw new Error('No upload URL received');
+
+        // Step 2: Upload to S3
+        setProgress(50, '📤 Uploading resume to S3...');
+        const uploadRes = await fetch(upload_url, {
+          method: 'PUT', headers: { 'Content-Type': 'application/pdf' }, body: selectedFile
+        });
+        if (!uploadRes.ok) throw new Error('S3 upload failed');
+
+        // Step 3: Analyze
+        setProgress(80, '🔍 Analyzing resume...');
+        const analyzeRes = await fetch(`${API_BASE}/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bucket: 'resume-analyzer-juiee-1',
+            file_name,
+            job_description: jobDesc,
+            email  // ✅ send email
+          })
+        });
+        const data = extractData(await analyzeRes.text());
+        if (data.message) throw new Error(data.message);
+
+        setProgress(100, '✅ Done!');
+
+        // Show gauge
+        animateGauge(data.match_score);
+        document.getElementById('gaugeNote').textContent = getScoreNote(data.match_score);
+
+        // Matched keywords
+        const kwList = document.getElementById('keywordsList');
+        kwList.innerHTML = '';
+        if (data.matched_keywords?.length > 0) {
+          data.matched_keywords.sort().forEach(kw => {
+            const tag = document.createElement('span');
+            tag.className = 'keyword-tag';
+            tag.textContent = kw;
+            kwList.appendChild(tag);
+          });
+        } else {
+          kwList.innerHTML = '<span style="color:#a0aec0;font-size:13px;">No matching keywords found</span>';
+        }
+
+        // Missing keywords
+        const jdWords = new Set(jobDesc.toLowerCase().replace(/[^a-zA-Z ]/g, '').split(/\s+/).filter(w => w.length > 2));
+        const matchedSet = new Set(data.matched_keywords || []);
+        const missing = [...jdWords].filter(w => !matchedSet.has(w));
+        const missingList = document.getElementById('missingList');
+        const missingBox = document.getElementById('missingBox');
+        missingList.innerHTML = '';
+        if (missing.length > 0) {
+          missing.forEach(kw => {
+            const tag = document.createElement('span');
+            tag.className = 'missing-tag';
+            tag.textContent = kw;
+            missingList.appendChild(tag);
+          });
+          missingBox.style.display = 'block';
+        } else {
+          missingBox.style.display = 'none';
+        }
+
+        document.getElementById('resumeId').textContent = 'Resume ID: ' + data.resume_id;
+        document.getElementById('result').style.display = 'block';
+
+        // Load trend chart after small delay
+        setTimeout(() => loadTrendChart(email), 1000);
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+        setTimeout(() => { progress.style.display = 'none'; }, 2000);
+      }
+    }
+  </script>
 </body>
+
 </html>
