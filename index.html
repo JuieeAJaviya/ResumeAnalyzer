@@ -117,7 +117,7 @@
       display: none;
     }
 
-    button {
+    button.primary {
       width: 100%;
       padding: 14px;
       background: linear-gradient(135deg, #667eea, #764ba2);
@@ -130,11 +130,34 @@
       transition: opacity 0.2s;
     }
 
-    button:hover {
+    button.primary:hover {
       opacity: 0.9;
     }
 
-    button:disabled {
+    button.primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    button.email-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #48bb78, #38a169);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 12px;
+    }
+
+    button.email-btn:hover {
+      opacity: 0.9;
+    }
+
+    button.email-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
@@ -172,7 +195,6 @@
       display: none;
     }
 
-    /* Gauge */
     .gauge-wrapper {
       display: flex;
       flex-direction: column;
@@ -222,7 +244,6 @@
       color: #4a5568;
     }
 
-    /* Keywords */
     .keywords-box {
       background: #f7fafc;
       border: 2px solid #e2e8f0;
@@ -278,7 +299,6 @@
       border: 1px solid #fed7d7;
     }
 
-    /* Chart */
     .chart-box {
       background: #f7fafc;
       border: 2px solid #e2e8f0;
@@ -293,6 +313,19 @@
       margin-bottom: 16px;
       font-size: 14px;
       font-weight: 600;
+    }
+
+    .email-sent {
+      background: #f0fff4;
+      border: 2px solid #9ae6b4;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      color: #276749;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 12px;
+      display: none;
     }
 
     .resume-id {
@@ -320,11 +353,9 @@
     <h1>📄 Resume Analyzer</h1>
     <p class="subtitle">Upload your resume and match it against any job description</p>
 
-    <!-- Email -->
     <label>Your Email Address</label>
     <input type="email" id="emailInput" placeholder="you@example.com" />
 
-    <!-- PDF Upload -->
     <label>Upload Resume (PDF)</label>
     <div class="upload-area" id="uploadArea" onclick="document.getElementById('pdfInput').click()">
       <div class="icon">📁</div>
@@ -333,20 +364,18 @@
     </div>
     <input type="file" id="pdfInput" accept=".pdf" onchange="handleFileSelect(this)" />
 
-    <!-- Job Description -->
     <label>Job Description</label>
     <textarea id="jobdesc" placeholder="Paste the job description here..."></textarea>
 
-    <button id="analyzeBtn" onclick="analyzeResume()">🔍 Analyze Resume</button>
+    <button class="primary" id="analyzeBtn" onclick="analyzeResume()">🔍 Analyze Resume</button>
 
     <div class="progress" id="progress">
       <div class="progress-bar-bg">
         <div class="progress-bar" id="progressBar"></div>
       </div>
-      <div class="progress-text" id="progressText">Uploading...</div>
+      <div class="progress-text" id="progressText"></div>
     </div>
 
-    <!-- Result -->
     <div id="result">
       <div class="gauge-wrapper">
         <svg class="gauge-svg" viewBox="0 0 200 200">
@@ -369,11 +398,16 @@
         <div class="keywords" id="missingList"></div>
       </div>
 
-      <!-- Score Trend Chart -->
       <div class="chart-box" id="chartBox">
         <h3>📊 Your Score Trend</h3>
         <canvas id="trendChart"></canvas>
       </div>
+
+      <!-- Email Report Button -->
+      <button class="email-btn" id="emailBtn" onclick="sendEmailReport()">
+        📧 Send Report to My Email
+      </button>
+      <div class="email-sent" id="emailSent">✅ Report sent to your email!</div>
 
       <div class="resume-id" id="resumeId"></div>
     </div>
@@ -385,6 +419,7 @@
     const API_BASE = 'https://65bn4zv9ii.execute-api.us-east-1.amazonaws.com/prod';
     let selectedFile = null;
     let trendChartInstance = null;
+    let lastResult = null; // store result for email
 
     function handleFileSelect(input) {
       const file = input.files[0];
@@ -451,8 +486,7 @@
         });
         const data = extractData(await res.text());
         const history = data.history || [];
-
-        if (history.length < 2) return; // need at least 2 points
+        if (history.length < 2) return;
 
         const labels = history.map((h, i) => {
           const d = new Date(h.timestamp);
@@ -460,9 +494,7 @@
         });
         const scores = history.map(h => h.match_score);
 
-        const chartBox = document.getElementById('chartBox');
-        chartBox.style.display = 'block';
-
+        document.getElementById('chartBox').style.display = 'block';
         if (trendChartInstance) trendChartInstance.destroy();
 
         const ctx = document.getElementById('trendChart').getContext('2d');
@@ -485,28 +517,65 @@
           },
           options: {
             responsive: true,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: ctx => `Score: ${ctx.raw}%`
-                }
-              }
-            },
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Score: ${ctx.raw}%` } } },
             scales: {
-              y: {
-                min: 0, max: 100,
-                ticks: { callback: v => v + '%' },
-                grid: { color: '#e2e8f0' }
-              },
+              y: { min: 0, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#e2e8f0' } },
               x: { grid: { display: false } }
             }
           }
         });
+      } catch (e) { console.log('Chart error:', e); }
+    }
+
+    async function sendEmailReport() {
+      if (!lastResult) return;
+
+      // ✅ Always read fresh email from input at time of clicking Send
+      const freshEmail = document.getElementById('emailInput').value.trim();
+      if (freshEmail) {
+        lastResult.email = freshEmail;
+      }
+
+      if (!lastResult.email) {
+        showError('Please enter your email address first.');
+        return;
+      }
+
+      const btn = document.getElementById('emailBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Sending...';
+      document.getElementById('errorBox').style.display = 'none';
+
+      try {
+        const res = await fetch(`${API_BASE}/send-report`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: lastResult.email,
+            match_score: lastResult.match_score,
+            matched_keywords: lastResult.matched_keywords,
+            missing_keywords: lastResult.missing_keywords,
+            resume_id: lastResult.resume_id
+          })
+        });
+
+        const raw = await res.text();
+        console.log('Send report raw response:', raw); // debug
+        const data = extractData(raw);
+
+        if (data.message === 'Email sent successfully!') {
+          document.getElementById('emailSent').style.display = 'block';
+          btn.textContent = '✅ Email Sent!';
+        } else {
+          throw new Error(data.message || 'Unknown error');
+        }
       } catch (e) {
-        console.log('Chart load error:', e);
+        btn.disabled = false;
+        btn.textContent = '📧 Send Report to My Email';
+        showError('Email failed: ' + e.message);
       }
     }
+
 
     async function analyzeResume() {
       const email = document.getElementById('emailInput').value.trim();
@@ -516,6 +585,9 @@
 
       document.getElementById('result').style.display = 'none';
       document.getElementById('errorBox').style.display = 'none';
+      document.getElementById('emailSent').style.display = 'none';
+      document.getElementById('emailBtn').disabled = false;
+      document.getElementById('emailBtn').textContent = '📧 Send Report to My Email';
 
       if (!email) { showError('Please enter your email address.'); return; }
       if (!selectedFile) { showError('Please upload a PDF resume.'); return; }
@@ -525,7 +597,6 @@
       progress.style.display = 'block';
 
       try {
-        // Step 1: Get pre-signed URL
         setProgress(20, '⏳ Getting upload URL...');
         const urlRes = await fetch(`${API_BASE}/get-upload-url`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
@@ -534,54 +605,42 @@
         const { upload_url, file_name } = urlData;
         if (!upload_url) throw new Error('No upload URL received');
 
-        // Step 2: Upload to S3
         setProgress(50, '📤 Uploading resume to S3...');
         const uploadRes = await fetch(upload_url, {
           method: 'PUT', headers: { 'Content-Type': 'application/pdf' }, body: selectedFile
         });
         if (!uploadRes.ok) throw new Error('S3 upload failed');
 
-        // Step 3: Analyze
         setProgress(80, '🔍 Analyzing resume...');
         const analyzeRes = await fetch(`${API_BASE}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            bucket: 'resume-analyzer-juiee-1',
-            file_name,
-            job_description: jobDesc,
-            email  // ✅ send email
-          })
+          body: JSON.stringify({ bucket: 'resume-analyzer-juiee-1', file_name, job_description: jobDesc, email })
         });
         const data = extractData(await analyzeRes.text());
         if (data.message) throw new Error(data.message);
 
         setProgress(100, '✅ Done!');
 
-        // Show gauge
+        // Gauge
         animateGauge(data.match_score);
         document.getElementById('gaugeNote').textContent = getScoreNote(data.match_score);
 
         // Matched keywords
         const kwList = document.getElementById('keywordsList');
         kwList.innerHTML = '';
-        if (data.matched_keywords?.length > 0) {
-          data.matched_keywords.sort().forEach(kw => {
-            const tag = document.createElement('span');
-            tag.className = 'keyword-tag';
-            tag.textContent = kw;
-            kwList.appendChild(tag);
-          });
-        } else {
-          kwList.innerHTML = '<span style="color:#a0aec0;font-size:13px;">No matching keywords found</span>';
-        }
+        (data.matched_keywords || []).sort().forEach(kw => {
+          const tag = document.createElement('span');
+          tag.className = 'keyword-tag';
+          tag.textContent = kw;
+          kwList.appendChild(tag);
+        });
 
         // Missing keywords
         const jdWords = new Set(jobDesc.toLowerCase().replace(/[^a-zA-Z ]/g, '').split(/\s+/).filter(w => w.length > 2));
         const matchedSet = new Set(data.matched_keywords || []);
         const missing = [...jdWords].filter(w => !matchedSet.has(w));
         const missingList = document.getElementById('missingList');
-        const missingBox = document.getElementById('missingBox');
         missingList.innerHTML = '';
         if (missing.length > 0) {
           missing.forEach(kw => {
@@ -590,15 +649,23 @@
             tag.textContent = kw;
             missingList.appendChild(tag);
           });
-          missingBox.style.display = 'block';
+          document.getElementById('missingBox').style.display = 'block';
         } else {
-          missingBox.style.display = 'none';
+          document.getElementById('missingBox').style.display = 'none';
         }
+
+        // Store for email
+        lastResult = {
+          email,
+          match_score: data.match_score,
+          matched_keywords: data.matched_keywords || [],
+          missing_keywords: missing,
+          resume_id: data.resume_id
+        };
 
         document.getElementById('resumeId').textContent = 'Resume ID: ' + data.resume_id;
         document.getElementById('result').style.display = 'block';
 
-        // Load trend chart after small delay
         setTimeout(() => loadTrendChart(email), 1000);
 
       } catch (err) {
